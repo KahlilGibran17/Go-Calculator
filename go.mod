@@ -2,7 +2,10 @@ module calculator
 
 go 1.23.5
 
-require fyne.io/fyne/v2 v2.5.5
+require (
+	fyne.io/fyne/v2 v2.5.5
+	github.com/Knetic/govaluate v3.0.0+incompatible
+)
 
 require (
 	fyne.io/systray v1.11.0 // indirect
