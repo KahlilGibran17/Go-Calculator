@@ -33,6 +33,7 @@ func main() {
 		{"4", nil}, {"5", nil}, {"6", nil}, {"*", theme.MediaPlayIcon()},
 		{"1", nil}, {"2", nil}, {"3", nil}, {"-", theme.NavigateBackIcon()},
 		{"C", nil}, {"0", nil}, {".", nil}, {"+", theme.NavigateNextIcon()},
+		{"⌫", theme.CancelIcon()},
 		{"=", theme.ConfirmIcon()},
 	}
 
@@ -42,15 +43,17 @@ func main() {
 
 	// Membuat tombol dengan tampilan lebih modern
 	for _, btn := range buttons {
-		button := widget.NewButton(btn.label, nil)
-
-		button.OnTapped = func(b string) func() {
+		button := widget.NewButton(btn.label, func(b string) func() {
 			return func() {
 				text := display.Text // Ambil teks yang ada di layar kalkulator
 
 				if b == "C" {
 					display.SetText("")
 					lastInput = ""
+				} else if b == "⌫" { // Tambahkan kondisi untuk tombol Backspace
+					if len(text) > 0 {
+						display.SetText(text[:len(text)-1]) // Hapus karakter terakhir
+					}
 				} else if b == "=" {
 					result, err := evaluateExpression(text)
 					if err != nil {
@@ -69,7 +72,7 @@ func main() {
 					lastInput = b
 				}
 			}
-		}(btn.label)
+		}(btn.label))
 
 		// Jika tombol memiliki ikon, gunakan ikon
 		if btn.icon != nil {
