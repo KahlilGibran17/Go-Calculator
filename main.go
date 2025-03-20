@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -43,7 +42,9 @@ func main() {
 
 	// Membuat tombol dengan tampilan lebih modern
 	for _, btn := range buttons {
-		button := widget.NewButton(btn.label, func(b string) func() {
+		button := widget.NewButton(btn.label, nil)
+
+		button.OnTapped = func(b string) func() {
 			return func() {
 				text := display.Text // Ambil teks yang ada di layar kalkulator
 
@@ -68,20 +69,11 @@ func main() {
 					lastInput = b
 				}
 			}
-		}(btn.label))
+		}(btn.label)
 
 		// Jika tombol memiliki ikon, gunakan ikon
 		if btn.icon != nil {
 			button.SetIcon(btn.icon)
-		}
-
-		// Efek klik tombol: berubah warna sementara
-		button.OnTapped = func() {
-			button.Importance = widget.MediumImportance
-			go func() {
-				time.Sleep(200 * time.Millisecond)
-				button.Importance = widget.HighImportance
-			}()
 		}
 
 		grid.Add(button)
@@ -102,8 +94,15 @@ func main() {
 
 // Evaluasi ekspresi matematika
 func evaluateExpression(expression string) (float64, error) {
-	// Hindari kesalahan jika operator terakhir tidak valid
-	expression = strings.TrimRight(expression, "+-*/")
+	expression = strings.TrimSpace(expression) // Hapus spasi yang tidak perlu
+
+	// Cek jika terakhir adalah operator
+	if strings.HasSuffix(expression, "+") ||
+		strings.HasSuffix(expression, "-") ||
+		strings.HasSuffix(expression, "*") ||
+		strings.HasSuffix(expression, "/") {
+		return 0, fmt.Errorf("invalid input")
+	}
 
 	exp, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
@@ -115,7 +114,11 @@ func evaluateExpression(expression string) (float64, error) {
 		return 0, fmt.Errorf("error evaluating")
 	}
 
-	return result.(float64), nil
+	// Pastikan hasil berupa float64
+	if res, ok := result.(float64); ok {
+		return res, nil
+	}
+	return 0, fmt.Errorf("unexpected result type")
 }
 
 // Fungsi untuk mengecek apakah karakter adalah operator
