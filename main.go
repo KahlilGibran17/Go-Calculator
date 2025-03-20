@@ -45,23 +45,26 @@ func main() {
 	for _, btn := range buttons {
 		button := widget.NewButton(btn.label, func(b string) func() {
 			return func() {
+				text := display.Text // Ambil teks yang ada di layar kalkulator
+
 				if b == "C" {
 					display.SetText("")
 					lastInput = ""
 				} else if b == "=" {
-					result, err := evaluateExpression(display.Text)
+					result, err := evaluateExpression(text)
 					if err != nil {
 						display.SetText("Error")
 					} else {
-						history.SetText(history.Text + "\n" + display.Text + " = " + strconv.FormatFloat(result, 'f', 2, 64))
+						history.SetText(history.Text + "\n" + text + " = " + strconv.FormatFloat(result, 'f', 2, 64))
 						display.SetText(strconv.FormatFloat(result, 'f', 2, 64))
 					}
 					lastInput = "="
 				} else {
-					if isOperator(b) && isOperator(lastInput) {
-						return // Hindari menambahkan operator berturut-turut
+					if isOperator(b) && (text == "" || isOperator(lastInput)) {
+						return // Hindari operator berturut-turut atau operator di awal
 					}
-					display.SetText(display.Text + b)
+
+					display.SetText(text + b) // Update display dengan input baru
 					lastInput = b
 				}
 			}
