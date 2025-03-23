@@ -15,16 +15,28 @@ import (
 
 func main() {
 	myApp := app.New()
-	myApp.Settings().SetTheme(theme.DarkTheme()) // Bisa diganti dengan theme.LightTheme()
+
+	// Simpan preferensi tema terakhir
+	pref := myApp.Preferences()
+	isDarkMode := pref.BoolWithFallback("dark_mode", true)
+	if isDarkMode {
+		myApp.Settings().SetTheme(theme.DarkTheme())
+	} else {
+		myApp.Settings().SetTheme(theme.LightTheme())
+	}
+
 	myWindow := myApp.NewWindow("Stylish Calculator")
 
 	display := widget.NewEntry()
 	display.SetText("")
-	display.Disable() // Agar tidak bisa diketik langsung
+	display.Disable()
 
 	history := widget.NewLabel("History:")
 
-	// Tombol kalkulator dengan ikon
+	// **🔹 Deklarasikan variabel tombol dulu**
+	var toggleThemeButton *widget.Button
+
+	// Tombol kalkulator
 	buttons := []struct {
 		label string
 		icon  fyne.Resource
@@ -33,26 +45,22 @@ func main() {
 		{"4", nil}, {"5", nil}, {"6", nil}, {"*", theme.MediaPlayIcon()},
 		{"1", nil}, {"2", nil}, {"3", nil}, {"-", theme.NavigateBackIcon()},
 		{"C", nil}, {"0", nil}, {".", nil}, {"+", theme.NavigateNextIcon()},
-		{"⌫", theme.CancelIcon()},
-		{"=", theme.ConfirmIcon()},
+		{"⌫", theme.NavigateBackIcon()}, {"=", theme.ConfirmIcon()},
 	}
 
 	grid := container.NewGridWithColumns(4)
-
 	lastInput := ""
 
-	// Membuat tombol dengan tampilan lebih modern
 	for _, btn := range buttons {
 		button := widget.NewButton(btn.label, func(b string) func() {
 			return func() {
-				text := display.Text // Ambil teks yang ada di layar kalkulator
-
+				text := display.Text
 				if b == "C" {
 					display.SetText("")
 					lastInput = ""
-				} else if b == "⌫" { // Tambahkan kondisi untuk tombol Backspace
+				} else if b == "⌫" { // Backspace Function
 					if len(text) > 0 {
-						display.SetText(text[:len(text)-1]) // Hapus karakter terakhir
+						display.SetText(text[:len(text)-1])
 					}
 				} else if b == "=" {
 					result, err := evaluateExpression(text)
@@ -65,16 +73,14 @@ func main() {
 					lastInput = "="
 				} else {
 					if isOperator(b) && (text == "" || isOperator(lastInput)) {
-						return // Hindari operator berturut-turut atau operator di awal
+						return
 					}
-
-					display.SetText(text + b) // Update display dengan input baru
+					display.SetText(text + b)
 					lastInput = b
 				}
 			}
 		}(btn.label))
 
-		// Jika tombol memiliki ikon, gunakan ikon
 		if btn.icon != nil {
 			button.SetIcon(btn.icon)
 		}
@@ -82,24 +88,36 @@ func main() {
 		grid.Add(button)
 	}
 
-	// Menambahkan padding agar lebih rapi
-	mainContainer := container.NewPadded(
-		container.NewVBox(
-			display,
-			history,
-			grid,
-		),
+	// **🔹 Isi variabel toggleThemeButton setelah dideklarasikan**
+	toggleThemeButton = widget.NewButtonWithIcon("Dark Mode", theme.ViewRefreshIcon(), func() {
+		isDarkMode = !isDarkMode
+		pref.SetBool("dark_mode", isDarkMode)
+
+		if isDarkMode {
+			myApp.Settings().SetTheme(theme.DarkTheme())
+			toggleThemeButton.SetText("Dark Mode")
+		} else {
+			myApp.Settings().SetTheme(theme.LightTheme())
+			toggleThemeButton.SetText("Light Mode")
+		}
+	})
+
+	// **Gunakan tombol di dalam container setelah dideklarasikan**
+	mainContainer := container.NewVBox(
+		toggleThemeButton,
+		display,
+		history,
+		grid,
 	)
 
-	myWindow.SetContent(mainContainer)
+	myWindow.SetContent(container.NewPadded(mainContainer))
 	myWindow.ShowAndRun()
 }
 
 // Evaluasi ekspresi matematika
 func evaluateExpression(expression string) (float64, error) {
-	expression = strings.TrimSpace(expression) // Hapus spasi yang tidak perlu
+	expression = strings.TrimSpace(expression)
 
-	// Cek jika terakhir adalah operator
 	if strings.HasSuffix(expression, "+") ||
 		strings.HasSuffix(expression, "-") ||
 		strings.HasSuffix(expression, "*") ||
@@ -117,7 +135,6 @@ func evaluateExpression(expression string) (float64, error) {
 		return 0, fmt.Errorf("error evaluating")
 	}
 
-	// Pastikan hasil berupa float64
 	if res, ok := result.(float64); ok {
 		return res, nil
 	}
