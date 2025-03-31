@@ -33,7 +33,7 @@ func main() {
 
 	history := widget.NewLabel("History:")
 
-	// **🔹 Deklarasikan variabel tombol dulu**
+	// **🔹 Declare Variable **
 	var toggleThemeButton *widget.Button
 
 	// Tombol kalkulator
