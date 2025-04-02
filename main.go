@@ -36,7 +36,7 @@ func main() {
 	// **🔹 Declare Variable **
 	var toggleThemeButton *widget.Button
 
-	// Tombol kalkulator
+	// Button Calculator
 	buttons := []struct {
 		label string
 		icon  fyne.Resource
