@@ -16,7 +16,7 @@ import (
 func main() {
 	myApp := app.New()
 
-	// Simpan preferensi tema terakhir
+	// Save Latest Theme
 	pref := myApp.Preferences()
 	isDarkMode := pref.BoolWithFallback("dark_mode", true)
 	if isDarkMode {
